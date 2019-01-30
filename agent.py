@@ -16,6 +16,8 @@ LR_ACTOR = 1e-4
 LR_CRITIC = 1e-3
 WEIGHT_DECAY = 0
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class Agent():
     def __init__(self, state_size, action_size, seed):
         """Initialize an Agent object.
@@ -48,10 +50,10 @@ class Agent():
 
 
     def step(self, state, action, reward, next_state, done):
-        """Save experience in replay memory, and use random sample from buffer to learn."""
+        """Save experience in replay memory, and use random sample from buffer to updateWeight_local."""
         self.memory.add(state, action, reward, next_state, done)
         if len(self.memory) > BATCH_SIZE:
-            self.learn(self.memory.sample())
+            self.updateWeight_local(self.memory.sample())
 
     def act(self, state, add_noise = True):
         """Returns actions for given state as per current policy."""
@@ -69,7 +71,7 @@ class Agent():
     def reset(self):
         self.noise.reset()
 
-    def learn(self, experiences, gamma):
+    def updateWeight_local(self, experiences, gamma):
         """Update policy and value parameters using given batch of experience tuples.
         Q_targets = r + γ * critic_target(next_state, actor_target(next_state))
         where:
@@ -107,12 +109,12 @@ class Agent():
         self.actor_optimizer.step()
 
         # ----------------------- update target networks ----------------------- #
-        self.update(self.critic_local, self.critic_target, TAU)
-        self.update(self.actor_local, self.actor_target, TAU)
+        self.updateWeight_target(self.critic_local, self.critic_target, TAU)
+        self.updateWeight_target(self.actor_local, self.actor_target, TAU)
 
 
 
-    def update(self, local_model, target_model, tau):
+    def updateWeight_target(self, local_model, target_model, tau):
         """Soft update TARGET model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
 
