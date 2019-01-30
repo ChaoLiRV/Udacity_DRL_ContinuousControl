@@ -48,13 +48,6 @@ class Agent():
         # Replay memory
         self.memory = ReplayBuffer(BUFFER_SIZE, BATCH_SIZE, seed)
 
-
-    def step(self, state, action, reward, next_state, done):
-        """Save experience in replay memory, and use random sample from buffer to updateWeight_local."""
-        self.memory.add(state, action, reward, next_state, done)
-        if len(self.memory) > BATCH_SIZE:
-            self.updateWeight_local(self.memory.sample())
-
     def act(self, state, add_noise = True):
         """Returns actions for given state as per current policy."""
         state = torch.from_numpy(state).float().to(device)
@@ -70,6 +63,12 @@ class Agent():
 
     def reset(self):
         self.noise.reset()
+
+    def step(self, state, action, reward, next_state, done):
+        """Save experience in replay memory, and use random sample from buffer to updateWeight_local."""
+        self.memory.add(state, action, reward, next_state, done)
+        if len(self.memory) > BATCH_SIZE:
+            self.updateWeight_local(self.memory.sample())
 
     def updateWeight_local(self, experiences, gamma):
         """Update policy and value parameters using given batch of experience tuples.
