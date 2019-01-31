@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import copy
 from collections import deque, namedtuple
 
 import torch
@@ -68,7 +69,7 @@ class Agent():
         """Save experience in replay memory, and use random sample from buffer to updateWeight_local."""
         self.memory.add(state, action, reward, next_state, done)
         if len(self.memory) > BATCH_SIZE:
-            self.updateWeight_local(self.memory.sample())
+            self.updateWeight_local(self.memory.sample(), GAMMA)
 
     def updateWeight_local(self, experiences, gamma):
         """Update policy and value parameters using given batch of experience tuples.
@@ -141,7 +142,7 @@ class ReplayBuffer():
         actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
         rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
         next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
-        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.unit8)).float().to(device)
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
         return (states, actions, rewards, next_states, dones)
 
     def add(self, state, action, reward, next_state, done):
@@ -154,7 +155,7 @@ class ReplayBuffer():
 class OUNoise:
     """Ornstein-Uhlenbeck process."""
     def __init__(self, size, seed, mu = 0., theta = 0.15, sigma = 0.2):
-        self.mu = mu.np.ones(size)
+        self.mu = mu * np.ones(size)
         self.theta = theta
         self.sigma = sigma
         self.seed = random.seed(seed)
