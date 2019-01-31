@@ -1,7 +1,8 @@
 from unityagents import UnityEnvironment
 import numpy as np
 
-env = UnityEnvironment(file_name='Reacher_single_mac.app')
+# env = UnityEnvironment(file_name='Reacher_single_mac.app')
+env = UnityEnvironment(file_name='Reacher_multi_mac.app')
 
 # get the default brain
 brain_name = env.brain_names[0]
@@ -24,18 +25,16 @@ state_size = states.shape[1]
 print('There are {} agents. Each observes a state with length: {}'.format(states.shape[0], state_size))
 print('The state for the first agent looks like:', states[0])
 
-import gym
-import random
+
 import torch
-import numpy as np
 from collections import deque
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 from agent import Agent
 agent = Agent(state_size=state_size, action_size=action_size, seed=0)
 
 
-def ddpg(n_episodes=500, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
+def ddpg(n_episodes=200, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
     """Deep Q-Learning.
 
     Params
@@ -73,19 +72,20 @@ def ddpg(n_episodes=500, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
         if np.mean(scores_window) >= 30.0:
             print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(i_episode - 100,
                                                                                          np.mean(scores_window)))
-            torch.save(agent.qnetwork_local.state_dict(), 'checkpoint.pth')
+            torch.save(agent.actor_local.state_dict(), 'checkpoint_actor.pth')
+            torch.save(agent.critic_local.state_dict(), 'checkpoint_critic.pth')
             break
     return scores
 
 
-scores = ddpg()
-
-# plot the scores
+# scores = ddpg()
+#
+# # plot the scores
 # fig = plt.figure()
 # ax = fig.add_subplot(111)
 # plt.plot(np.arange(len(scores)), scores)
 # plt.ylabel('Score')
 # plt.xlabel('Episode #')
 # plt.show()
-
-env.close()
+#
+# env.close()
