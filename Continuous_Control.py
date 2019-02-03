@@ -31,10 +31,10 @@ from collections import deque
 import matplotlib.pyplot as plt
 
 from agent import Agent
-agent = Agent(state_size=state_size, action_size=action_size, seed=0)
+agent = Agent(state_size=state_size, action_size=action_size, num_agents=num_agents, seed=0)
 
 
-def ddpg(n_episodes=200, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
+def ddpg(n_episodes=200, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
     """Deep Q-Learning.
 
     Params
@@ -50,18 +50,18 @@ def ddpg(n_episodes=200, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
     eps = eps_start  # initialize epsilon
     for i_episode in range(1, n_episodes + 1):
         env_info = env.reset(train_mode=True)[brain_name]  # reset the environment
-        state = env_info.vector_observations[0]  # get the current state
+        state = env_info.vector_observations  # get the current state (agent_num x state_dim)
         score = 0
-        for t in range(max_t):
-            action = agent.act(state, eps)
+        while True:
+            action = agent.act(state=state, add_noise=True)
             env_info = env.step(action)[brain_name]  # send the action to the environment
-            next_state = env_info.vector_observations[0]  # get the next state
-            reward = env_info.rewards[0]  # get the reward
-            done = env_info.local_done[0]  # see if episode has finished
+            next_state = env_info.vector_observations  # get the next state
+            reward = env_info.rewards  # get the reward
+            done = env_info.local_done  # see if episode has finished
             agent.step(state, action, reward, next_state, done)
             state = next_state
-            score += reward
-            if done:
+            score += np.mean(reward)
+            if np.any(done):
                 break
         scores_window.append(score)  # save most recent score
         scores.append(score)  # save most recent score
@@ -78,14 +78,14 @@ def ddpg(n_episodes=200, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.99
     return scores
 
 
-# scores = ddpg()
-#
-# # plot the scores
-# fig = plt.figure()
-# ax = fig.add_subplot(111)
-# plt.plot(np.arange(len(scores)), scores)
-# plt.ylabel('Score')
-# plt.xlabel('Episode #')
-# plt.show()
-#
-# env.close()
+scores = ddpg()
+
+# plot the scores
+fig = plt.figure()
+ax = fig.add_subplot(111)
+plt.plot(np.arange(len(scores)), scores)
+plt.ylabel('Score')
+plt.xlabel('Episode #')
+plt.show()
+
+env.close()
