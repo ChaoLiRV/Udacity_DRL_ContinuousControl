@@ -28,13 +28,12 @@ print('The state for the first agent looks like:', states[0])
 
 import torch
 from collections import deque
-import matplotlib.pyplot as plt
 
 from agent import Agent
 agent = Agent(state_size=state_size, action_size=action_size, num_agents=num_agents, seed=0)
 
 
-def ddpg(n_episodes=200, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
+def ddpg(n_episodes=200, max_time = 1000, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
     """Deep Q-Learning.
 
     Params
@@ -51,14 +50,15 @@ def ddpg(n_episodes=200, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
     for i_episode in range(1, n_episodes + 1):
         env_info = env.reset(train_mode=True)[brain_name]  # reset the environment
         state = env_info.vector_observations  # get the current state (agent_num x state_dim)
+        agent.reset()
         score = 0
-        while True:
+        for timeStep in range(max_time):
             action = agent.act(state=state, add_noise=True)
             env_info = env.step(action)[brain_name]  # send the action to the environment
             next_state = env_info.vector_observations  # get the next state
             reward = env_info.rewards  # get the reward
             done = env_info.local_done  # see if episode has finished
-            agent.step(state, action, reward, next_state, done)
+            agent.step(state, action, reward, next_state, done, timeStep)
             state = next_state
             score += np.mean(reward)
             if np.any(done):
@@ -80,12 +80,13 @@ def ddpg(n_episodes=200, eps_start=1.0, eps_end=0.01, eps_decay=0.99):
 
 scores = ddpg()
 
-# plot the scores
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plt.plot(np.arange(len(scores)), scores)
-plt.ylabel('Score')
-plt.xlabel('Episode #')
-plt.show()
-
-env.close()
+# # plot the scores
+# import matplotlib.pyplot as plt
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# plt.plot(np.arange(len(scores)), scores)
+# plt.ylabel('Score')
+# plt.xlabel('Episode #')
+# plt.show()
+#
+# env.close()
