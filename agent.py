@@ -20,7 +20,7 @@ WEIGHT_DECAY = 0
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent():
-    def __init__(self, state_size, action_size, seed):
+    def __init__(self, state_size, action_size, num_agents, seed):
         """Initialize an Agent object.
 
         Params
@@ -32,6 +32,7 @@ class Agent():
         self.seed = random.seed(seed)
         self.state_size = state_size
         self.action_size = action_size
+        self.num_agents = num_agents
 
         #Actor Network
         self.actor_local = Actor(state_size, action_size, seed, fc1_units=256, fc2_units=128).to(device)
@@ -44,7 +45,7 @@ class Agent():
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr = LR_CRITIC, weight_decay=WEIGHT_DECAY)
 
         # Noise process
-        self.noise = OUNoise(action_size, seed)
+        self.noise = OUNoise((num_agents, action_size), seed)
 
         # Replay memory
         self.memory = ReplayBuffer(BUFFER_SIZE, BATCH_SIZE, seed)
@@ -52,9 +53,11 @@ class Agent():
     def act(self, state, add_noise = True):
         """Returns actions for given state as per current policy."""
         state = torch.from_numpy(state).float().to(device)
+        action = np.zeros((self.num_agents, self.action_size))
         self.actor_local.eval() # set module to evaluation mode
         with torch.no_grad():
-            action = self.actor_local(state).cpu().data.numpy()
+            for agent_idx, state_ in enumerate(state):
+                action[agent_idx, :] = self.actor_local.forward(state_).cpu().data.numpy()
         self.actor_local.train() # reset it back to training mode
 
         if add_noise:
@@ -67,9 +70,10 @@ class Agent():
 
     def step(self, state, action, reward, next_state, done):
         """Save experience in replay memory, and use random sample from buffer to updateWeight_local."""
-        self.memory.add(state, action, reward, next_state, done)
-        if len(self.memory) > BATCH_SIZE:
-            self.updateWeight_local(self.memory.sample(), GAMMA)
+        for i in range(self.num_agents):
+            self.memory.add(state[i,:], action[i,:], reward[i], next_state[i,:], done[i])
+            if len(self.memory) > BATCH_SIZE:
+                self.updateWeight_local(self.memory.sample(), GAMMA)
 
     def updateWeight_local(self, experiences, gamma):
         """Update policy and value parameters using given batch of experience tuples.
@@ -155,6 +159,7 @@ class ReplayBuffer():
 class OUNoise:
     """Ornstein-Uhlenbeck process."""
     def __init__(self, size, seed, mu = 0., theta = 0.15, sigma = 0.2):
+        self.size = size
         self.mu = mu * np.ones(size)
         self.theta = theta
         self.sigma = sigma
@@ -168,6 +173,6 @@ class OUNoise:
     def sample(self):
         """Update internal state and return it as a noise sample."""
         x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for _ in range(len(x))])
+        dx = self.theta * (self.mu - x) + self.sigma * np.random.standard_normal(self.size)
         self.state = x + dx
         return self.state
