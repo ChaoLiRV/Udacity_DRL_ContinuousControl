@@ -10,11 +10,11 @@ import torch.optim as optim
 from model import Actor, Critic
 
 BUFFER_SIZE = int(1e5)
-BATCH_SIZE = 128
+BATCH_SIZE = 256
 GAMMA = 0.99
 TAU = 1e-3
 LR_ACTOR = 1e-4
-LR_CRITIC = 1e-3
+LR_CRITIC = 1e-4
 WEIGHT_DECAY = 0
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -35,13 +35,13 @@ class Agent():
         self.num_agents = num_agents
 
         #Actor Network
-        self.actor_local = Actor(state_size, action_size, seed, fc1_units=256, fc2_units=128).to(device)
-        self.actor_target = Actor(state_size, action_size, seed, fc1_units=256, fc2_units=128).to(device)
+        self.actor_local = Actor(state_size, action_size, seed).to(device)
+        self.actor_target = Actor(state_size, action_size, seed).to(device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr = LR_ACTOR)
 
         #Critic Network
-        self.critic_local = Critic(state_size, action_size, seed, fc1_units=256, fc2_units=128).to(device)
-        self.critic_target = Critic(state_size, action_size, seed, fc1_units=256, fc2_units=128).to(device)
+        self.critic_local = Critic(state_size, action_size, seed).to(device)
+        self.critic_target = Critic(state_size, action_size, seed).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr = LR_CRITIC, weight_decay=WEIGHT_DECAY)
 
         # Noise process
@@ -68,12 +68,12 @@ class Agent():
     def reset(self):
         self.noise.reset()
 
-    def step(self, state, action, reward, next_state, done):
+    def step(self, state, action, reward, next_state, done, timeStep):
         """Save experience in replay memory, and use random sample from buffer to updateWeight_local."""
         for i in range(self.num_agents):
             self.memory.add(state[i,:], action[i,:], reward[i], next_state[i,:], done[i])
-            if len(self.memory) > BATCH_SIZE:
-                self.updateWeight_local(self.memory.sample(), GAMMA)
+        if len(self.memory) > BATCH_SIZE and timeStep%2==0:
+            self.updateWeight_local(self.memory.sample(), GAMMA)
 
     def updateWeight_local(self, experiences, gamma):
         """Update policy and value parameters using given batch of experience tuples.
@@ -101,6 +101,7 @@ class Agent():
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        torch.nn.utils.clip_grad_norm(self.critic_local.parameters(), 1)
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #
