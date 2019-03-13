@@ -8,7 +8,7 @@
 ![Trained Agent][image1]
 
 ### Overview
-This is the 2nd project for the Udacity Deep Reinforcement Learning Nanodegree program. The goal of this project is to use deep neural network to solve a continuous control task. For this project, the [Reacher](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Learning-Environment-Examples.md#reacher) environment is utilized.
+This is the _2nd_ project for the Udacity Deep Reinforcement Learning Nanodegree program. The goal of this project is to use deep neural network to solve a continuous control task. For this project, the [Reacher](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Learning-Environment-Examples.md#reacher) environment is utilized.
 
 In this environment, a double-jointed arm can move to target locations. A reward of +0.1 is provided for each step that the agent's hand is in the goal location. Thus, the goal of your agent is to maintain its position at the target location for as many time steps as possible.
 
